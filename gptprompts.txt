@@ -1,0 +1,31 @@
+Fire Egg
+Main Red: #D23C2F
+Orange: #E76D3C
+Yellow: #F2A541
+Darker Red: #8B2E22
+Prompt: An animated egg design for a fire-based mythical creature in the style of the water egg design. The egg has fiery patterns in reds, oranges, and yellows, set against a background resembling flames. The background should emphasize the fiery nature with dynamic flames and glowing embers. The egg features shades of red (#D23C2F), orange (#E76D3C), yellow (#F2A541), and darker red (#8B2E22).
+
+
+Water Egg
+Light Blue: #3B98E0
+Teal: #1F6B8E
+Aqua: #6ACFD4
+Dark Blue: #19567D
+Prompt: An animated egg design for an earth-based mythical creature in the style of the water egg design. The egg has earthy patterns with more green shades of color, set against a background resembling soil and rocks. The background should emphasize the natural, rugged nature with textures of soil and stone. The egg features shades of light green (#A0C759), green (#6B9435), dark green (#4A6A2C), and brown (#594428).
+rompt: An animated egg design for a water-based mythical creature in the style of the water egg design. The egg has flowing water patterns in various shades of blue, set against a background resembling water. The background should emphasize the aquatic nature with waves and water droplets. The egg features shades of light blue (#A5D8F3), blue (#3896D6), dark blue (#1F6499), aqua (#62B1E8), and deep blue (#1A4668).
+
+
+Wind Egg (Yellow)
+Light Yellow: #F8E19B
+Yellow: #F7C13A
+Golden Yellow: #E8A517
+Dark Yellow: #BA8A0D
+Prompt: An animated egg design for a wind-based mythical creature in the style of the water egg design. The egg has swirling wind patterns in different shades of yellow, set against a background resembling the sky with wind currents. The background should emphasize the airy nature with dynamic clouds and wind swirls. The egg features shades of light yellow (#F8E19B), yellow (#F7C13A), golden yellow (#E8A517), and dark yellow (#BA8A0D).
+
+
+Earth Egg (Green)
+Light Green: #A0C759
+Green: #6B9435
+Dark Green: #4A6A2C
+Brown: #594428
+Prompt: An animated egg design for an earth-based mythical creature in the style of the water egg design. The egg has earthy patterns with more green shades of color, set against a background resembling soil and rocks. The background should emphasize the natural, rugged nature with textures of soil and stone. The egg features shades of light green (#A0C759), green (#6B9435), dark green (#4A6A2C), and brown (#594428).

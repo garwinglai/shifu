@@ -10,6 +10,7 @@ export default function App() {
       <Link href="/home">Go Home page</Link>
       <Link href="/onboarding-chat">Go chat</Link>
       <Link href="/onboarding-rules">Go rules</Link>
+      <Link href="/onboarding-image">Go image</Link>
     </View>
   );
 }

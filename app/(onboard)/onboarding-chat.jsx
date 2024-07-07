@@ -3,10 +3,8 @@ import {
   Text,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
   Keyboard,
   FlatList,
-  TouchableOpacity,
   Image,
   StyleSheet,
 } from "react-native";
@@ -18,9 +16,9 @@ import ChatMessage from "../../components/chat/ChatMessage";
 import Typewriter from "../../components/chat/TypeWriter";
 import PalSelection from "../../components/pals/PalSelection";
 import PrimaryButton from "../../components/buttons/PrimaryButton";
-import characterOptions from "../../constants/palOptions";
 import onboardingQuestions from "../../constants/onboardingQuestions";
-import SendButton from "../../components/buttons/SendButton";
+import OptionSelection from "../../components/buttons/OptionSelection";
+import MultipleOptionSelection from "../../components/MultipleOptions";
 
 const OnboardingChat = () => {
   const navigation = useNavigation(); // Use navigation
@@ -32,6 +30,7 @@ const OnboardingChat = () => {
   const [userResponses, setUserResponses] = useState({
     name: "",
     birthday: "",
+    age: "",
     weight: "",
     height: "",
     gender: "",
@@ -41,12 +40,54 @@ const OnboardingChat = () => {
       animal: "",
       element: "",
       highlight: "",
+      image: "",
     },
+    fitnessGoal: "",
+    fitnessLevel: "",
+    trainFrequency: "", //how many days per week
+    trainDuration: "", //how long per train session
+    location: "",
+    equipment: "",
+    imageGoal: "",
+    startingImage: "",
+    additionalRequests: "",
   });
   const [userAnswered, setUserAnswered] = useState(false);
   const [palSelected, setPalSelected] = useState(false);
+  const [genderSelected, setGenderSelected] = useState(false);
+  const [fitnessGoalSelected, setFitnessGoalSelected] = useState(false);
+  const [fitnessLevelSelected, setFitnessLevelSelected] = useState(false);
+  const [trainFrequencySelected, setTrainFrequencySelected] = useState(false);
+  const [trainDurationSelected, setTrainDurationSelected] = useState(false);
+  const [locationSelected, setLocationSelected] = useState(false);
+  const [equipmentSelected, setEquipmentSelected] = useState(false);
+  const [imageGoalSelected, setImageGoalSelected] = useState(false);
+  const [disableYesShifuButton, setDisableYesShifuButton] = useState(false);
+  const [disableConfirmSelectionButton, setDisableConfirmSelectionButton] =
+    useState(false);
+
   const messageInputBarRef = useRef(null);
   const flatListRef = useRef(null);
+
+  // destructure userResponses
+  const {
+    name,
+    birthday,
+    age,
+    weight,
+    height,
+    gender,
+    pal,
+    fitnessGoal,
+    fitnessLevel,
+    trainFrequency,
+    trainDuration,
+    location,
+    equipment,
+    imageGoal,
+    userImageStart,
+    additionalRequests,
+  } = userResponses;
 
   useEffect(() => {
     if (userAnswered) {
@@ -55,26 +96,9 @@ const OnboardingChat = () => {
     }
   }, [userResponses]);
 
-  const recordUserInput = (text) => {
-    const updatedResponses = { ...userResponses };
-    const currentQuestion = onboardingQuestions[currentQuestionIndex].message;
-    console.log("currentQuestion", currentQuestion);
-
-    if (currentQuestion.includes("What is your name")) {
-      updatedResponses.name = text;
-    } else if (currentQuestion.includes("When is your birthday")) {
-      updatedResponses.birthday = text;
-    } else if (currentQuestion.includes("what is your current weight")) {
-      updatedResponses.weight = text;
-    } else if (currentQuestion.includes("What is your current height")) {
-      updatedResponses.height = text;
-    } else if (currentQuestion.includes("Which gender do you identify with")) {
-      updatedResponses.gender = text;
-    }
-
-    setUserResponses(updatedResponses);
-    console.log("userResponses", userResponses);
-  };
+  useEffect(() => {
+    flatListRef.current.scrollToEnd({ animated: true });
+  }, [messages, userResponses, userAnswered]);
 
   const handleSend = (message) => {
     const newMessages = [
@@ -87,24 +111,45 @@ const OnboardingChat = () => {
     setUserAnswered(true);
   };
 
+  const recordUserInput = (context, name) => {
+    const currentQuestionName = onboardingQuestions[currentQuestionIndex].name;
+    let keyName = name ? name : currentQuestionName;
+
+    setUserResponses((prev) => ({ ...prev, [keyName]: context }));
+  };
+
   const updateMessageUI = () => {
     const newMessages = [...messages];
 
-    const nextQuestionIndex = currentQuestionIndex + 1;
+    const nextQuestionIndex =
+      location !== "" && location === "Gym"
+        ? currentQuestionIndex + 2
+        : currentQuestionIndex + 1;
+
+    console.log("location", location);
+    console.log("nextQuestionIndex", nextQuestionIndex);
 
     if (nextQuestionIndex < onboardingQuestions.length) {
-      let nextQuestion = onboardingQuestions[nextQuestionIndex].message;
-      const nextType = onboardingQuestions[nextQuestionIndex].type;
+      let {
+        message: nextMessage,
+        type: nextType,
+        options: nextOptions,
+        name: nextName,
+      } = onboardingQuestions[nextQuestionIndex];
 
-      if (nextQuestion.includes("[User's Name]")) {
+      if (nextMessage.includes("[User's Name]")) {
         const userName = userResponses.name;
-        nextQuestion = nextQuestion.replace("[User's Name]", userName);
-        console.log("userNam", userName);
+        nextMessage = nextMessage.replace("[User's Name]", userName);
       }
 
       newMessages.push({
         sender: "Shifu",
-        content: { type: nextType, message: nextQuestion },
+        content: {
+          type: nextType,
+          message: nextMessage,
+          options: nextOptions,
+          name: nextName,
+        },
       });
 
       setMessages(newMessages);
@@ -114,7 +159,7 @@ const OnboardingChat = () => {
       newMessages.push({
         sender: "Shifu",
         content: {
-          type: "message",
+          type: "options",
           message: `Amazing young warrior. Based on your answers, I’ve created a tailored plan for you. However, in order to achieve greatness, you, young warrior, hold the keys to success. Let’s embark on this journey together, ${userResponses.name}, my new disciple.`,
         },
       });
@@ -129,36 +174,34 @@ const OnboardingChat = () => {
       setMessages(newMessages);
     }
 
-    flatListRef.current.scrollToEnd({ animated: true });
+    // flatListRef.current.scrollToEnd({ animated: true });
   };
 
-  // const updateMessageUI = () => {
-  //   const newMessages = [...messages];
+  const handleSelectOptions = (option, name) => {
+    const newMessages = [
+      ...messages,
+      {
+        sender: "user",
+        content: {
+          type: "message",
+          message: `${option}`,
+        },
+      },
+    ];
 
-  //   const nextQuestionIndex = currentQuestionIndex + 1;
+    setMessages(newMessages);
+    recordUserInput(option, name);
+    setUserAnswered(true);
 
-  //   if (nextQuestionIndex < onboardingQuestions.length) {
-  //     let nextQuestion = onboardingQuestions[nextQuestionIndex].message;
-  //     const nextType = onboardingQuestions[nextQuestionIndex].type;
+    if (name === "gender") setGenderSelected(true);
+    if (name === "fitnessLevel") setFitnessLevelSelected(true);
+    if (name === "trainFrequency") setTrainFrequencySelected(true);
+    if (name === "trainDuration") setTrainDurationSelected(true);
+    if (name === "location") setLocationSelected(true);
+    if (name === "imageGoal") setImageGoalSelected(true);
+  };
 
-  //     if (nextQuestion.includes("[User's Name]")) {
-  //       const userName = userResponses.name;
-  //       nextQuestion = nextQuestion.replace("[User's Name]", userName);
-  //     }
-
-  //     newMessages.push({
-  //       sender: "Shifu",
-  //       content: { type: nextType, message: nextQuestion },
-  //     });
-
-  //     setMessages(newMessages);
-  //     setCurrentQuestionIndex(nextQuestionIndex);
-  //   }
-
-  //   flatListRef.current.scrollToEnd({ animated: true });
-  // };
-
-  const handleCharacterSelect = (character) => {
+  const handleCharacterSelect = (character, name) => {
     const userName = userResponses.name;
     const newMessages = [
       ...messages,
@@ -179,9 +222,29 @@ const OnboardingChat = () => {
       },
     ];
 
+    recordUserInput(character, name);
     setPalSelected(true);
     setMessages(newMessages);
-    flatListRef.current.scrollToEnd({ animated: true });
+  };
+
+  const handleMultipleOptionsSelect = (selectedOptions, name) => {
+    const newMessages = [
+      ...messages,
+      {
+        sender: "user",
+        content: {
+          type: "message",
+          message: `To achieve my final form, I choose: \n${selectedOptions.join(
+            ", "
+          )}.`,
+        },
+      },
+    ];
+
+    setMessages(newMessages);
+    recordUserInput(selectedOptions, name);
+    setUserAnswered(true);
+    setFitnessGoalSelected(true);
   };
 
   const handleOutsidePress = () => {
@@ -194,26 +257,68 @@ const OnboardingChat = () => {
   return (
     <SafeAreaView className="flex-1">
       <View>
-        <Text className="text-center py-4">Shifu</Text>
+        <Text className="text-center pt-4 pb-2">Shifu</Text>
+      </View>
+      <View className="rounded mx-auto px-2 pb-2">
+        <Text className="text-xs italic text-center">
+          Edits can be made in profile, after.
+        </Text>
       </View>
       <View className="flex-1">
         <FlatList
           ref={flatListRef}
           data={messages}
+          keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => {
             const { sender, content } = item;
-            const { type, message, image } = content;
-
-            console.log("type", type);
+            const { type, message, image, options, name } = content;
 
             return (
-              <View>
+              <View className="pb-2">
                 {sender === "Shifu" ? (
-                  type === "selection" ? (
+                  type === "multiple-options" ? (
+                    <View>
+                      <Typewriter message={message} />
+                      <View className="mt-2 ml-8 mr-2">
+                        <MultipleOptionSelection
+                          fitnessGoalSelected={fitnessGoalSelected}
+                          name={name}
+                          options={options}
+                          onSelect={handleMultipleOptionsSelect}
+                          disableConfirmSelectionButton={
+                            disableConfirmSelectionButton
+                          }
+                          setDisableConfirmSelectionButton={
+                            setDisableConfirmSelectionButton
+                          }
+                        />
+                      </View>
+                    </View>
+                  ) : type === "options" ? (
+                    <View>
+                      <Typewriter message={message} />
+                      <View className="mt-2 ml-8 mr-2">
+                        <OptionSelection
+                          genderSelected={genderSelected}
+                          fitnessLevelSelected={fitnessLevelSelected}
+                          trainFrequencySelected={trainFrequencySelected}
+                          trainDurationSelected={trainDurationSelected}
+                          locationSelected={locationSelected}
+                          equipmentSelected={equipmentSelected}
+                          imageGoalSelected={imageGoalSelected}
+                          name={name}
+                          options={options}
+                          onSelect={handleSelectOptions}
+                        />
+                      </View>
+                    </View>
+                  ) : type === "select-pal" ? (
                     <View>
                       <Typewriter message={message} />
                       <PalSelection
-                        options={characterOptions}
+                        palSelected={palSelected}
+                        options={options}
+                        name={name}
                         onSelect={handleCharacterSelect}
                       />
                     </View>
@@ -232,20 +337,24 @@ const OnboardingChat = () => {
                   ) : image ? (
                     <View>
                       <Typewriter message={message} />
-
-                      <Image
-                        source={image}
-                        className="w-48 h-48 ml-6 rounded-3xl border aspect-square "
-                        resizeMethod="contain"
-                      />
-
-                      <PrimaryButton
-                        onPress={() => {
-                          setCurrentQuestionIndex(currentQuestionIndex + 1);
-                          handleSend("Yes Shifu, I'm ready.");
-                        }}
-                        text="Yes Shifu, I'm ready."
-                      />
+                      <View className="ml-2 mt-2">
+                        <Image
+                          source={image}
+                          className="w-48 h-48 ml-6 rounded-3xl border aspect-square "
+                          resizeMethod="contain"
+                        />
+                      </View>
+                      {!disableYesShifuButton && (
+                        <View className="mt-4 w-1/2 ml-8">
+                          <PrimaryButton
+                            onPress={() => {
+                              setDisableYesShifuButton(true);
+                              handleSend("Yes Shifu, I'm ready.");
+                            }}
+                            text="Yes Shifu, I'm ready."
+                          />
+                        </View>
+                      )}
                     </View>
                   ) : (
                     <Typewriter message={message} />
@@ -256,17 +365,20 @@ const OnboardingChat = () => {
               </View>
             );
           }}
-          keyExtractor={(item, index) => index.toString()}
         />
       </View>
 
-      {currentQuestionIndex < onboardingQuestions.length && (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <MessageInput ref={messageInputBarRef} onSend={handleSend} />
-        </KeyboardAvoidingView>
-      )}
+      {currentQuestionIndex < onboardingQuestions.length &&
+        onboardingQuestions[currentQuestionIndex].type !== "options" &&
+        onboardingQuestions[currentQuestionIndex].type !== "multiple-options" &&
+        onboardingQuestions[currentQuestionIndex].type !== "select-pal" && (
+          <KeyboardAvoidingView
+            className=""
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+          >
+            <MessageInput ref={messageInputBarRef} onSend={handleSend} />
+          </KeyboardAvoidingView>
+        )}
     </SafeAreaView>
   );
 };

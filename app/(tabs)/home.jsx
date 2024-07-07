@@ -16,10 +16,12 @@ import MessageInput from "../../components/chat/MessageInput";
 import ChatMessage from "../../components/chat/ChatMessage";
 import Typewriter from "../../components/chat/TypeWriter";
 import PrimaryButton from "../../components/buttons/PrimaryButton";
+import { OPENAI_API_KEY } from "@env";
 
-const key = "sk-proj-I0QNMWSPsXthEDr8w6G9T3BlbkFJrhF21091Nrd0NqIx4MGi";
+console.log("open", OPENAI_API_KEY);
+
 const openai = new OpenAI({
-  apiKey: key,
+  apiKey: OPENAI_API_KEY,
 });
 
 const Home = () => {
@@ -29,6 +31,8 @@ const Home = () => {
   const flatListRef = useRef(null);
 
   useEffect(() => {
+    // Comment out to run openai
+    return;
     const run = async () => {
       const completion = await openai.chat.completions.create({
         messages: [{ role: "system", content: "Give me a workout routine." }],

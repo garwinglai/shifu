@@ -6,7 +6,7 @@ const PrimaryButton = ({ onPress, text }) => {
   return (
     <TouchableOpacity onPress={onPress}>
       <View
-        className="p-2 shadow-md w-1/2 rounded-full ml-6 mt-4 bg-secondary"
+        className="p-2 shadow-md rounded-full bg-secondary"
         style={styles.shadow}
       >
         <Text className="text-center text-white font-psemibold">{text}</Text>
