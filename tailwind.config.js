@@ -3,21 +3,24 @@ module.exports = {
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      indent: {
+        4: "1rem",
+        8: "2rem", // or your desired value
+      },
       colors: {
-        primary: "#F3C60B",
-        secondary: {
-          DEFAULT: "#FF9C01",
-          100: "#FF9001",
-          200: "#FF8E01",
+        primary: {
+          DEFAULT: "#FF8137",
+          100: "#9B3922",
+          200: "#481E14",
         },
+        secondary: "#246CD0",
         black: {
-          DEFAULT: "#000",
-          100: "#000000",
-          200: "#232533",
+          100: "#111214",
+          200: "#352f36",
+          300: "#0C0C0C",
         },
-        gray: {
-          100: "#CDCDE0",
-        },
+        white: "#FFFFFF",
+        gray: "#F3F3F4",
       },
       fontFamily: {
         pthin: ["Poppins-Thin", "sans-serif"],

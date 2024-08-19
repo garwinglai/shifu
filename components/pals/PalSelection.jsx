@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import { styled } from "nativewind";
 
 const PalSelection = ({ options, onSelect, palSelected, name }) => {
   const [selectedPal, setSelectedPal] = useState(null);
@@ -38,7 +37,7 @@ const PalSelection = ({ options, onSelect, palSelected, name }) => {
             <View>
               <Text className="font-bold text-center mt-2">{option.name}</Text>
               <Text className="text-gray-600 text-center text-xs">
-                {option.description}
+                {option.highlight}
               </Text>
             </View>
           </TouchableOpacity>
@@ -66,7 +65,7 @@ const PalSelection = ({ options, onSelect, palSelected, name }) => {
             <View>
               <Text className="font-bold text-center mt-2">{option.name}</Text>
               <Text className="text-gray-600 text-center text-xs">
-                {option.description}
+                {option.highlight}
               </Text>
             </View>
           </TouchableOpacity>

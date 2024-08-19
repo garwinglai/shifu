@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, useNavigation } from "expo-router";
+import { useRouter } from "expo-router";
 import MessageInput from "../../components/chat/MessageInput";
 import ChatMessage from "../../components/chat/ChatMessage";
 import Typewriter from "../../components/chat/TypeWriter";
@@ -19,9 +19,11 @@ import PrimaryButton from "../../components/buttons/PrimaryButton";
 import onboardingQuestions from "../../constants/onboardingQuestions";
 import OptionSelection from "../../components/buttons/OptionSelection";
 import MultipleOptionSelection from "../../components/MultipleOptions";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import logo from "../../assets/images/logo/logo.png";
 
-const OnboardingChat = () => {
-  const navigation = useNavigation(); // Use navigation
+const UserOnboard = () => {
+  const router = useRouter();
 
   const [messages, setMessages] = useState([
     { sender: "Shifu", content: onboardingQuestions[0] },
@@ -33,6 +35,7 @@ const OnboardingChat = () => {
     age: "",
     weight: "",
     height: "",
+    unitOfMeasurement: "",
     gender: "",
     pal: {
       name: "",
@@ -41,6 +44,7 @@ const OnboardingChat = () => {
       element: "",
       highlight: "",
       image: "",
+      level: 1,
     },
     fitnessGoal: "",
     fitnessLevel: "",
@@ -48,9 +52,8 @@ const OnboardingChat = () => {
     trainDuration: "", //how long per train session
     location: "",
     equipment: "",
-    imageGoal: "",
-    startingImage: "",
-    additionalRequests: "",
+    injuries: "",
+    bodyFocus: "",
   });
   const [userAnswered, setUserAnswered] = useState(false);
   const [palSelected, setPalSelected] = useState(false);
@@ -69,65 +72,87 @@ const OnboardingChat = () => {
   const messageInputBarRef = useRef(null);
   const flatListRef = useRef(null);
 
-  // destructure userResponses
-  const {
-    name,
-    birthday,
-    age,
-    weight,
-    height,
-    gender,
-    pal,
-    fitnessGoal,
-    fitnessLevel,
-    trainFrequency,
-    trainDuration,
-    location,
-    equipment,
-    imageGoal,
-    userImageStart,
-    additionalRequests,
-  } = userResponses;
-
   useEffect(() => {
     if (userAnswered) {
       updateMessageUI();
       setUserAnswered(false);
     }
-  }, [userResponses]);
+  }, [userResponses, userAnswered]);
 
   useEffect(() => {
     flatListRef.current.scrollToEnd({ animated: true });
   }, [messages, userResponses, userAnswered]);
 
-  const handleSend = (message) => {
+  const completeInitiation = async () => {
+    try {
+      console.log("complete", userResponses);
+      const serializedContext = JSON.stringify(userResponses);
+      await AsyncStorage.setItem("user", serializedContext);
+      router.push("/(onboard)/onboard-review");
+    } catch (error) {
+      console.error("Failed to save user data", error);
+    }
+  };
+
+  const handleSend = async (message, name) => {
+    console.log("reply", userResponses);
     const newMessages = [
       ...messages,
       { sender: "user", content: { type: "message", message } },
     ];
 
-    recordUserInput(message);
+    if (name !== "filler") {
+      recordUserInput(message);
+    }
     setMessages(newMessages);
     setUserAnswered(true);
   };
 
-  const recordUserInput = (context, name) => {
+  const recordUserInput = async (context, name) => {
     const currentQuestionName = onboardingQuestions[currentQuestionIndex].name;
     let keyName = name ? name : currentQuestionName;
 
+    if (name === "pal") {
+      console.log("context", context);
+      const {
+        characterImage: image,
+        name: palName,
+        element,
+        highlight,
+        description,
+        animal,
+      } = context;
+      // Add state value to pal
+      setUserResponses((prev) => ({
+        ...prev,
+        [keyName]: {
+          ...prev[keyName],
+          name: palName,
+          element,
+          highlight,
+          description,
+          image,
+          animal,
+        },
+      }));
+
+      return;
+    }
+
     setUserResponses((prev) => ({ ...prev, [keyName]: context }));
+
+    //* Use serialized content somewhere
+    const serializedContext = JSON.stringify(context);
   };
 
   const updateMessageUI = () => {
     const newMessages = [...messages];
+    const currentQuestionName = onboardingQuestions[currentQuestionIndex].name;
 
     const nextQuestionIndex =
-      location !== "" && location === "Gym"
+      currentQuestionName === "location" && userResponses.location === "Gym"
         ? currentQuestionIndex + 2
         : currentQuestionIndex + 1;
-
-    console.log("location", location);
-    console.log("nextQuestionIndex", nextQuestionIndex);
 
     if (nextQuestionIndex < onboardingQuestions.length) {
       let {
@@ -159,22 +184,16 @@ const OnboardingChat = () => {
       newMessages.push({
         sender: "Shifu",
         content: {
-          type: "options",
-          message: `Amazing young warrior. Based on your answers, I’ve created a tailored plan for you. However, in order to achieve greatness, you, young warrior, hold the keys to success. Let’s embark on this journey together, ${userResponses.name}, my new disciple.`,
-        },
-      });
-      newMessages.push({
-        sender: "Shifu",
-        content: {
-          type: "button",
-          message: "Start Game",
+          type: "message-final",
+          name: "",
+          message: `Excellent young warrior. You have completed your initiation. Based on your answers, I’ve created a tailored plan for you. \n\nWith the wisdom of Shifu, the spirit of your Pal, and the strength within you, we shall embark on this journey to help you achieve greatness.\n\nRemember, dedication and perseverance are the keys to mastering your fitness goals. You, young warrior, hold the keys to success. \n\nLet’s embark on this journey together, ${userResponses.name}, my new disciple.`,
         },
       });
 
       setMessages(newMessages);
     }
 
-    // flatListRef.current.scrollToEnd({ animated: true });
+    flatListRef.current.scrollToEnd({ animated: true });
   };
 
   const handleSelectOptions = (option, name) => {
@@ -216,7 +235,7 @@ const OnboardingChat = () => {
         sender: "Shifu",
         content: {
           type: "message",
-          message: `Excellent choice, ${userName}. Let me tell you more about your Pal, ${character.name}: \n \n${character.detailedDescription}`,
+          message: `Excellent choice, ${userName}. Let me tell you more about your Pal, ${character.name}: \n \n${character.description}`,
           image: character.characterImage,
         },
       },
@@ -234,9 +253,7 @@ const OnboardingChat = () => {
         sender: "user",
         content: {
           type: "message",
-          message: `To achieve my final form, I choose: \n${selectedOptions.join(
-            ", "
-          )}.`,
+          message: `${selectedOptions.join(", ")}.`,
         },
       },
     ];
@@ -255,16 +272,25 @@ const OnboardingChat = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1">
-      <View>
-        <Text className="text-center pt-4 pb-2">Shifu</Text>
+    <SafeAreaView className="flex-1 ">
+      <View className="rounded-b rounded-2xl  py-1 mx-2">
+        <View className="flex-row items-center justify-center mr-6">
+          <Image
+            source={logo}
+            className="w-10 h-10 rounded-full aspect-square"
+            resizeMethod="contain"
+          />
+          <Text className="text-center pt-2 text-primary text-2xl font-pblack">
+            Shifu
+          </Text>
+        </View>
+        <View className="rounded mx-auto px-2 pb-2">
+          <Text className="text-xs italic text-center">
+            Edits can be made in profile, after.
+          </Text>
+        </View>
       </View>
-      <View className="rounded mx-auto px-2 pb-2">
-        <Text className="text-xs italic text-center">
-          Edits can be made in profile, after.
-        </Text>
-      </View>
-      <View className="flex-1">
+      <View className="flex-1 ">
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -274,7 +300,7 @@ const OnboardingChat = () => {
             const { type, message, image, options, name } = content;
 
             return (
-              <View className="pb-2">
+              <View className="pb-2 pt-0">
                 {sender === "Shifu" ? (
                   type === "multiple-options" ? (
                     <View>
@@ -322,36 +348,37 @@ const OnboardingChat = () => {
                         onSelect={handleCharacterSelect}
                       />
                     </View>
-                  ) : type === "button" ? (
-                    <View
-                      className="p-2 shadow-md w-1/2 rounded-full ml-6 mt-4 bg-secondary"
-                      style={styles.shadow}
-                    >
-                      <Link
-                        href="/home"
-                        className="text-center text-white font-psemibold"
-                      >
-                        Start Game
-                      </Link>
+                  ) : type === "message-final" ? (
+                    <View>
+                      <Typewriter message={message} />
+                      <View className="mt-4 w-1/2 ml-11">
+                        <PrimaryButton
+                          onPress={() => {
+                            completeInitiation();
+                          }}
+                          text="Start Journey"
+                        />
+                      </View>
                     </View>
                   ) : image ? (
                     <View>
                       <Typewriter message={message} />
-                      <View className="ml-2 mt-2">
+                      <View className="ml-6 mt-2">
                         <Image
                           source={image}
-                          className="w-48 h-48 ml-6 rounded-3xl border aspect-square "
+                          className="w-48 h-48 ml-6 rounded-3xl border aspect-square"
                           resizeMethod="contain"
                         />
                       </View>
+
                       {!disableYesShifuButton && (
-                        <View className="mt-4 w-1/2 ml-8">
+                        <View className="mt-4 w-1/2 ml-12">
                           <PrimaryButton
                             onPress={() => {
                               setDisableYesShifuButton(true);
-                              handleSend("Yes Shifu, I'm ready.");
+                              handleSend("I'm ready, Shifu.", "filler");
                             }}
-                            text="Yes Shifu, I'm ready."
+                            text="I'm ready, Shifu."
                           />
                         </View>
                       )}
@@ -373,7 +400,7 @@ const OnboardingChat = () => {
         onboardingQuestions[currentQuestionIndex].type !== "multiple-options" &&
         onboardingQuestions[currentQuestionIndex].type !== "select-pal" && (
           <KeyboardAvoidingView
-            className=""
+            className="rounded-3xl bg-white shadow-sm"
             behavior={Platform.OS === "ios" ? "padding" : "height"}
           >
             <MessageInput ref={messageInputBarRef} onSend={handleSend} />
@@ -383,7 +410,7 @@ const OnboardingChat = () => {
   );
 };
 
-export default OnboardingChat;
+export default UserOnboard;
 
 const styles = StyleSheet.create({
   shadow: {

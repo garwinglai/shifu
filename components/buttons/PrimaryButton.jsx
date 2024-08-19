@@ -5,11 +5,10 @@ import LinearGradient from "react-native-linear-gradient";
 const PrimaryButton = ({ onPress, text }) => {
   return (
     <TouchableOpacity onPress={onPress}>
-      <View
-        className="p-2 shadow-md rounded-full bg-secondary"
-        style={styles.shadow}
-      >
-        <Text className="text-center text-white font-psemibold">{text}</Text>
+      <View className="p-2 rounded-full bg-primary shadow-sm shadow-primary">
+        <Text className="text-center text-white font-psemibold text-base">
+          {text}
+        </Text>
       </View>
     </TouchableOpacity>
   );

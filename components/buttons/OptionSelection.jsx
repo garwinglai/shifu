@@ -32,27 +32,34 @@ const OptionSelection = ({
   };
 
   const handlePress = (option, name) => {
-    console.log("called", option);
     setSelectedOption(option);
     onSelect(option, name);
   };
 
   return (
-    <View className="flex-row flex-wrap gap-2">
+    <View className="flex-row flex-wrap gap-2 ml-2">
       {options.map((option, index) => (
         <TouchableOpacity
           key={index}
           disabled={isDisabled()}
           onPress={() => handlePress(option, name)}
-          className={`py-2 px-4 rounded border ${
+          className={`py-2 px-4 border border-black rounded-xl ${
             isDisabled() ? "opacity-10" : ""
           } ${
             selectedOption === option
-              ? "bg-orange-500 opacity-100"
+              ? "bg-secondary shadow-sm shadow-secondary opacity-100 border-secondary "
               : "border-gray-300"
           }`}
         >
-          <Text className="">{option}</Text>
+          <Text
+            className={`text-black ${
+              selectedOption === option
+                ? "text-white font-pmedium"
+                : "text-black"
+            }`}
+          >
+            {option}
+          </Text>
         </TouchableOpacity>
       ))}
     </View>

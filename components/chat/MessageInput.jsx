@@ -7,10 +7,8 @@ import React, {
 } from "react";
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
-  Keyboard,
   Animated,
   Easing,
   Platform,
@@ -18,8 +16,6 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
-import { BlurView } from "expo-blur";
-import SendButton from "../buttons/SendButton";
 
 const MessageInputBar = forwardRef(({ onSend }, ref) => {
   const [message, setMessage] = useState("");
@@ -27,6 +23,8 @@ const MessageInputBar = forwardRef(({ onSend }, ref) => {
   const [isHideAddIcon, setIsHideAddIcon] = useState(false);
   const animationValue = useRef(new Animated.Value(0)).current;
   const sendButtonScale = useRef(new Animated.Value(0)).current;
+  const [inputHeight, setInputHeight] = useState(40); // Initial height of TextInput
+  const borderRadiusAnim = useRef(new Animated.Value(50)).current; // Initial border radius for rounded-full
 
   useImperativeHandle(ref, () => ({
     shrinkRightIcons,
@@ -55,10 +53,16 @@ const MessageInputBar = forwardRef(({ onSend }, ref) => {
   };
 
   const handleSend = () => {
-    console.log("Send message:", message);
+    if (!message || message === "") return;
+
     onSend(message.trim());
     setMessage("");
-    // Keyboard.dismiss();
+    setInputHeight(40); // Reset input height after sending the message
+    Animated.timing(borderRadiusAnim, {
+      toValue: 50, // Go back to rounded-full
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
   };
 
   const expandRightIcons = () => {
@@ -80,63 +84,24 @@ const MessageInputBar = forwardRef(({ onSend }, ref) => {
     }).start(() => setIsExpanded(false));
   };
 
-  const openCamera = async () => {
-    const permissionGranted = await requestCameraPermission();
-    if (!permissionGranted) return;
+  const handleContentSizeChange = (event) => {
+    const newHeight = event.nativeEvent.contentSize.height;
+    setInputHeight(newHeight);
 
-    launchCamera(
-      {
-        mediaType: "photo",
-      },
-      (response) => {
-        if (response.didCancel) {
-          console.log("User cancelled image picker");
-        } else if (response.error) {
-          console.log("ImagePicker Error: ", response.error);
-        } else {
-          console.log("Photo taken: ", response.assets);
-        }
-      }
-    );
-  };
-
-  const openImagePicker = () => {
-    launchImageLibrary(
-      {
-        mediaType: "photo",
-      },
-      (response) => {
-        if (response.didCancel) {
-          console.log("User cancelled image picker");
-        } else if (response.error) {
-          console.log("ImagePicker Error: ", response.error);
-        } else {
-          console.log("Photo selected: ", response.assets);
-        }
-      }
-    );
-  };
-
-  const requestCameraPermission = async () => {
-    if (Platform.OS === "android") {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          {
-            title: "Camera Permission",
-            message: "App needs access to your camera to take photos",
-            buttonNeutral: "Ask Me Later",
-            buttonNegative: "Cancel",
-            buttonPositive: "OK",
-          }
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.warn(err);
-        return false;
-      }
+    // Animate borderRadius when the input height grows beyond a certain point
+    if (newHeight > 40) {
+      Animated.timing(borderRadiusAnim, {
+        toValue: 12, // rounded-lg equivalent
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    } else {
+      Animated.timing(borderRadiusAnim, {
+        toValue: 50, // rounded-full equivalent
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
     }
-    return true;
   };
 
   const iconContainerStyle = {
@@ -148,42 +113,44 @@ const MessageInputBar = forwardRef(({ onSend }, ref) => {
   };
 
   return (
-    <View className="flex-row items-center p-2 border-t border-gray-300">
+    <View className="flex-row items-center p-2 rounded-2xl ">
       <TouchableOpacity className="p-2">
-        <Icon name="mic" size={24} color="gray" />
+        <Icon name="mic" size={24} color="black" />
       </TouchableOpacity>
 
-      <TextInput
-        className="flex-1 p-2 mx-2 border border-gray-300 rounded-full"
-        placeholder="Type a message"
-        value={message}
-        onChangeText={handleChangeText}
-        onFocus={shrinkRightIcons}
-      />
-      {!isHideAddIcon && !message.trim() && (
-        <TouchableOpacity className="p-2" onPress={expandRightIcons}>
-          <Icon name="add" size={24} color="gray" />
-        </TouchableOpacity>
-      )}
-      {isExpanded && !message.trim() && (
-        <>
-          <Animated.View style={[iconContainerStyle, { overflow: "hidden" }]}>
-            <TouchableOpacity className="p-2" onPress={openCamera}>
-              <Icon name="camera-alt" size={24} color="gray" />
-            </TouchableOpacity>
-          </Animated.View>
-          <Animated.View style={[iconContainerStyle, { overflow: "hidden" }]}>
-            <TouchableOpacity className="p-2" onPress={openImagePicker}>
-              <Icon name="photo-library" size={24} color="gray" />
-            </TouchableOpacity>
-          </Animated.View>
-        </>
-      )}
-      {message.trim() && (
-        <Animated.View style={{ transform: [{ scale: sendButtonScale }] }}>
-          <SendButton onPress={handleSend} />
-        </Animated.View>
-      )}
+      <Animated.View
+        style={{
+          flex: 1,
+          marginHorizontal: 8,
+          paddingHorizontal: 16,
+          backgroundColor: "#E5E7EB", // bg-gray-200 equivalent
+          borderRadius: borderRadiusAnim, // Animated borderRadius
+          overflow: "hidden",
+        }}
+        className="flex-1 mx-2 bg-gray-200" // NativeWind classes
+      >
+        <TextInput
+          value={message}
+          placeholder="Type to respond..."
+          onChangeText={handleChangeText}
+          onFocus={shrinkRightIcons}
+          multiline={true}
+          onContentSizeChange={handleContentSizeChange}
+          style={{
+            height: Math.max(40, inputHeight),
+            color: "black",
+            textAlignVertical: "center", // Ensures vertical alignment
+          }}
+          className="text-base text-black px-0 py-2" // NativeWind classes
+        />
+      </Animated.View>
+
+      <TouchableOpacity
+        onPress={handleSend}
+        className="p-3 bg-secondary rounded-xl shadow-sm shadow-[#246CD0]"
+      >
+        <Icon name="send" size={14} color="white" />
+      </TouchableOpacity>
     </View>
   );
 });

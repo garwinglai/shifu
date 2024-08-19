@@ -18,8 +18,6 @@ import Typewriter from "../../components/chat/TypeWriter";
 import PrimaryButton from "../../components/buttons/PrimaryButton";
 import { OPENAI_API_KEY } from "@env";
 
-console.log("open", OPENAI_API_KEY);
-
 const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
 });
@@ -32,12 +30,17 @@ const Home = () => {
 
   useEffect(() => {
     // Comment out to run openai
-    return;
+    // return;
     const run = async () => {
       const completion = await openai.chat.completions.create({
-        messages: [{ role: "system", content: "Give me a workout routine." }],
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
+        // response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: "You are a fitness trainer with 10 years of experience named shifu." },
+        ],
       });
+
+      console.log("completion", completion.choices);
 
       const newMessage = [
         ...messages,
@@ -63,9 +66,13 @@ const Home = () => {
     ];
 
     setMessages(newMessages);
-    setUserAnswered(true);
+    // setUserAnswered(true);
 
     try {
+      // const aiWorkoutCompletion = await openai.chat.completions.create({
+      //   messages: [{ role: "system", content: "Give me a workout routine." }],
+      //   model: "gpt-4o-mini",
+      // })
       const response = await openai.Completion.create({
         engine: "davinci",
         prompt: message,

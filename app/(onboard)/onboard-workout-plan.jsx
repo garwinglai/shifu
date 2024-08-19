@@ -1,12 +1,12 @@
 import { View, Text } from "react-native";
 import React from "react";
 
-const OnboardingRules = () => {
+const OnboardWorkoutPlan = () => {
   return (
     <View>
-      <Text>OnboardingRules</Text>
+      <Text>OnboardWorkoutPlan</Text>
     </View>
   );
 };
 
-export default OnboardingRules;
+export default OnboardWorkoutPlan;
